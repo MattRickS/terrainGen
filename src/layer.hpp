@@ -20,9 +20,3 @@ std::map<LayerType, LayerProperties> LAYER_PROPERTIES = {
     {LayerType::Rock, {vec3f(0.2f, 0.2f, 0.2f)}},
     {LayerType::Soil, {vec3f(0.4f, 0.2f, 0.0f)}},
 };
-
-struct Layer
-{
-    LayerType type;
-    float height;
-};
