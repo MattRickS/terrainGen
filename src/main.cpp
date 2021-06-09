@@ -6,11 +6,22 @@
 
 using Grid = Grid2D<LayerType>;
 
+vec3f cellColor(Cell<LayerType> *cell)
+{
+    vec3f color(0.0f);
+    while (cell != nullptr)
+    {
+        color += LAYER_PROPERTIES[cell->value].color * cell->depth;
+        cell = cell->below.get();
+    }
+    return color;
+}
+
 void writeGrid(std::ostream &out, Grid &grid)
 {
     startPPM(std::cout, grid.width(), grid.height());
     for (auto &cell : grid.values)
-        writeColor(std::cout, LAYER_PROPERTIES[cell->value].color * cell->depth);
+        writeColor(std::cout, cellColor(cell.get()));
 }
 
 void addNoiseLayer(FastNoiseLite &noise, Grid &grid, LayerType type)
