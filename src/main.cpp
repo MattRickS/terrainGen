@@ -40,6 +40,17 @@ void addNoiseLayer(FastNoiseLite &noise, Grid &grid, LayerType type)
             grid.addDepth(grid.iterator(x, y), noise.GetNoise((float)x, (float)y) * 0.5f + 0.5f, type);
 }
 
+Grid::CellIterator deepestCell(Grid &grid)
+{
+    return std::max_element(grid.begin(), grid.end(), [](auto &lhs, auto &rhs) -> bool
+                            { lhs.totalDepth() < rhs.totalDepth(); });
+}
+Grid::CellIterator mostLayeredCell(Grid &grid)
+{
+    return std::max_element(grid.begin(), grid.end(), [](auto &lhs, auto &rhs) -> bool
+                            { lhs.numLayers() < rhs.numLayers(); });
+}
+
 int main(int argc, char const *argv[])
 {
     Grid grid(512, 512);
@@ -62,9 +73,9 @@ int main(int argc, char const *argv[])
     writeGrid(std::cout, grid);
     writeNormals(std::cout, grid);
 
-    // std::cout
-    //     << "P3\nmax depth: " << grid.deepestCell()->totalDepth() << std::endl
-    //     << "Max Layers: " << grid.mostLayeredCell()->numLayers() << std::endl;
+    std::cout
+        << "P3\nmax depth: " << deepestCell(grid)->totalDepth() << std::endl
+        << "Max Layers: " << mostLayeredCell(grid)->numLayers() << std::endl;
 
     return 0;
 }

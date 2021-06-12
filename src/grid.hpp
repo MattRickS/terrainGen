@@ -127,16 +127,6 @@ public:
     {
         return m_values.end();
     }
-    CellIterator deepestCell()
-    {
-        return std::max_element(begin(), end(), [](auto &lhs, auto &rhs) -> bool
-                                { lhs.totalDepth() < rhs.totalDepth(); });
-    }
-    CellIterator mostLayeredCell()
-    {
-        return std::max_element(begin(), end(), [](auto &lhs, auto &rhs) -> bool
-                                { lhs.numLayers() < rhs.numLayers(); });
-    }
 
 private:
     size_t m_width, m_height;
