@@ -62,6 +62,10 @@ public:
             it->depth = depth;
             it->value = val;
         }
+        else if (it->value == val)
+        {
+            it->depth += depth;
+        }
         else
         {
             // Copy the current cell into a new child cell, update the current cell
@@ -112,7 +116,14 @@ public:
         float right = m_values[y * m_width + (x < m_width - 1 ? x + 1 : x)].totalDepth();
         float top = m_values[(y > 0 ? y - 1 : y) * m_width + x].totalDepth();
         float bottom = m_values[(y < m_height - 1 ? y + 1 : y) * m_width + x].totalDepth();
-        return normalise(vec3f(2.0f * (right - left), 2.0f * (bottom - top), -4.0f));
+
+        //  https://stackoverflow.com/questions/49640250/calculate-normals-from-heightmap
+        // Algorithm says (2(R-L), 2(B-T), -4) but that looks incorrect...
+        // I expect positive X normals on right facing slopes and positive Y normals
+        // on "north" facing slopes, as well as a near constant blue for the up vector.
+        // Manually edited the sign of each value to get what I expect
+        // TODO: Validate the math
+        return normalise(vec3f(-2.0f * (right - left), 2.0f * (bottom - top), 4.0f));
     }
 
     CellIterator begin()
@@ -121,6 +132,8 @@ public:
     }
     CellIterator iterator(size_t x, size_t y)
     {
+        if (x >= m_width || y >= m_height)
+            return end();
         return m_values.begin() + y * m_width + x;
     }
     CellIterator end()

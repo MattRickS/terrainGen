@@ -66,6 +66,12 @@ inline vec3<T> operator+(const vec3<T> &lhs, const vec3<T> &rhs)
 }
 
 template <typename T>
+inline vec3<T> operator+(const vec3<T> &lhs, const float &rhs)
+{
+    return vec3<T>(lhs.x + rhs, lhs.y + rhs, lhs.z + rhs);
+}
+
+template <typename T>
 inline vec3<T> operator-(const vec3<T> &lhs, const vec3<T> &rhs)
 {
     return vec3<T>(lhs.x - rhs.x, lhs.y - rhs.y, lhs.z - rhs.z);

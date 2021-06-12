@@ -1,3 +1,4 @@
+#pragma once
 #include <map>
 #include <vec3.hpp>
 
@@ -17,6 +18,6 @@ struct LayerProperties
 
 std::map<LayerType, LayerProperties> LAYER_PROPERTIES = {
     {LayerType::Air, {vec3f(1.0f, 1.0f, 1.0f)}},
-    {LayerType::Rock, {vec3f(0.2f, 0.2f, 0.2f)}},
-    {LayerType::Soil, {vec3f(0.4f, 0.2f, 0.0f)}},
+    {LayerType::Rock, {vec3f(0.0f, 0.1f, 0.0f)}},
+    {LayerType::Soil, {vec3f(1.0f, 0.0f, 0.0f)}},
 };
