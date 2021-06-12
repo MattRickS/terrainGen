@@ -22,9 +22,8 @@ vec3f cellColor(Grid::Cell *cell)
 void writeNormals(std::ostream &out, Grid &grid)
 {
     startPPM(std::cout, grid.width(), grid.height());
-    for (size_t y = 0; y < grid.height(); ++y)
-        for (size_t x = 0; x < grid.width(); ++x)
-            writeColor(std::cout, grid.normal(x, y));
+    for (auto it = grid.begin(); it != grid.end(); ++it)
+        writeColor(std::cout, grid.normal(it));
 }
 
 void writeGrid(std::ostream &out, Grid &grid)

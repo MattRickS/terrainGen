@@ -50,11 +50,6 @@ public:
     const size_t width() const { return m_height; };
     const size_t height() const { return m_width; };
     const size_t size() const { return m_width * m_height; };
-    template <typename U>
-    bool isValidPos(const U x, const U y)
-    {
-        return (0 <= x && x < m_width && 0 <= y && y < m_height);
-    }
 
     void addDepth(CellIterator it, float depth, T val)
     {
@@ -103,9 +98,14 @@ public:
             it->depth -= depth;
         }
     }
-    vec3f normal(size_t x, size_t y)
+    vec3f normal(CellIterator it)
     {
-        assert(isValidPos(x, y));
+        assert(it != end());
+
+        int index = std::distance(begin(), it);
+        int x = index % m_width;
+        int y = index / m_width;
+
         // Central differential
         // When calculating out of bounds values, assume the edge values are extended
         float left = m_values[y * m_width + (x > 0 ? x - 1 : x)].totalDepth();
