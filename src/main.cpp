@@ -8,7 +8,7 @@
 
 using Grid = Grid2D<LayerType>;
 
-vec3f cellColor(Cell<LayerType> *cell)
+vec3f cellColor(Grid::Cell *cell)
 {
     vec3f color(0.0f);
     while (cell != nullptr)
@@ -37,12 +37,8 @@ void writeGrid(std::ostream &out, Grid &grid)
 void addNoiseLayer(FastNoiseLite &noise, Grid &grid, LayerType type)
 {
     for (int y = 0; y < grid.height(); y++)
-    {
         for (int x = 0; x < grid.width(); x++)
-        {
             grid.addDepth(grid.iterator(x, y), noise.GetNoise((float)x, (float)y) * 0.5f + 0.5f, type);
-        }
-    }
 }
 
 int main(int argc, char const *argv[])
@@ -58,6 +54,11 @@ int main(int argc, char const *argv[])
     // Write second layer on top of first
     noise.SetSeed(1783986);
     addNoiseLayer(noise, grid, LayerType::Soil);
+
+    // Remove an arbitrary section
+    for (int y = 100; y < 200; y++)
+        for (int x = 100; x < 200; x++)
+            grid.removeDepth(grid.iterator(x, y), 0.5f);
 
     writeGrid(std::cout, grid);
     writeNormals(std::cout, grid);

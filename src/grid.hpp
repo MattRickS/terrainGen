@@ -6,35 +6,39 @@
 #include <vec3.hpp>
 
 template <typename T>
-struct Cell
-{
-    std::unique_ptr<Cell> below = nullptr;
-    float floor = 0.0f; // height until the bottom of this section
-    float depth = 0.0f; // depth of this section
-    T value;
-
-    Cell() {}
-    Cell(float f, float d, T val) : floor(f), depth(d), value(val) {}
-
-    float totalDepth()
-    {
-        return floor + depth;
-    }
-    size_t numLayers()
-    {
-        size_t count{1};
-        if (below != nullptr)
-            count += below->numLayers();
-        return count;
-    }
-};
-
-template <typename T>
 class Grid2D
 {
-    using CellIterator = typename std::vector<Cell<T>>::iterator;
 
 public:
+    /*
+    A Cell represents a vertical slice of an (x, y) co-ordinate in the Grid.
+    Cells are "stacked" on one another and their base height is assumed to be fixed,
+    ie, only the topmost Cell is expected to be modified.
+    */
+    struct Cell
+    {
+        std::unique_ptr<Cell> below = nullptr;
+        float floor = 0.0f; // height until the bottom of this section
+        float depth = 0.0f; // depth of this section
+        T value;
+
+        Cell() {}
+        Cell(float f, float d, T val) : floor(f), depth(d), value(val) {}
+
+        float totalDepth()
+        {
+            return floor + depth;
+        }
+        size_t numLayers()
+        {
+            size_t count{1};
+            if (below != nullptr)
+                count += below->numLayers();
+            return count;
+        }
+    };
+    using CellIterator = typename std::vector<Cell>::iterator;
+
     Grid2D(size_t w, size_t h) : m_width(w), m_height(h), m_values(w * h) {}
 
     void fill(float depth, T val)
@@ -66,8 +70,8 @@ public:
         else
         {
             // Copy the current cell into a new child cell, update the current cell
-            auto oldCell = std::make_unique<Cell<T>>(std::move(*it));
-            *it = Cell<T>(oldCell->totalDepth(), depth, val);
+            auto oldCell = std::make_unique<Cell>(std::move(*it));
+            *it = Cell(oldCell->totalDepth(), depth, val);
             it->below = std::move(oldCell);
         }
     }
@@ -78,12 +82,21 @@ public:
 
         if (depth > it->depth)
         {
-            // Remove cell and recurse with remaining depth
-            float remainingDepth = depth - it->depth;
-            // move the unique pointer contents out into the vector. The vector now manages
-            // the memory, and unique ptr cleans up without removing anything important.
-            *it = std::move(*(it->below));
-            removeDepth(it, remainingDepth);
+            if (it->below != nullptr)
+            {
+                // Remove cell and recurse with remaining depth
+                float remainingDepth = depth - it->depth;
+                // move the unique pointer contents out into the vector. The vector now manages
+                // the memory, and unique ptr cleans up without removing anything important.
+                *it = std::move(*(it->below));
+                removeDepth(it, remainingDepth);
+            }
+            else
+            {
+                // If there's more depth being removed than available, simply zero out
+                // the last Cell.
+                it->depth = 0.0f;
+            }
         }
         else
         {
@@ -127,5 +140,5 @@ public:
 
 private:
     size_t m_width, m_height;
-    std::vector<Cell<T>> m_values;
+    std::vector<Cell> m_values;
 };
