@@ -118,12 +118,9 @@ public:
         float bottom = m_values[(y < m_height - 1 ? y + 1 : y) * m_width + x].totalDepth();
 
         //  https://stackoverflow.com/questions/49640250/calculate-normals-from-heightmap
-        // Algorithm says (2(R-L), 2(B-T), -4) but that looks incorrect...
-        // I expect positive X normals on right facing slopes and positive Y normals
-        // on "north" facing slopes, as well as a near constant blue for the up vector.
-        // Manually edited the sign of each value to get what I expect
+        // Inverting the normal to get an accurate result but.... why?
         // TODO: Validate the math
-        return normalise(vec3f(-2.0f * (right - left), 2.0f * (bottom - top), 4.0f));
+        return normalise(-vec3f(2.0f * (right - left), 2.0f * (bottom - top), -4.0f));
     }
 
     CellIterator begin()
