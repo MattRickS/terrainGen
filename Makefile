@@ -6,5 +6,4 @@ build:
 
 .PHONY: run
 run:
-	./build/app | csplit --quiet --elide-empty-files --prefix="images/${1:-img}" --suffix="%02d.ppm" - "/P3/" "{*}"
-
+	./build/app | csplit --quiet --elide-empty-files --prefix="images/${1:-img}" --suffix="%02d.ppm" - "/P3/" "{*}" && echo "Done"

@@ -1,5 +1,6 @@
 #pragma once
 #include <algorithm>
+#include <cassert>
 #include <memory>
 #include <vector>
 #include <vec3.hpp>
@@ -7,20 +8,17 @@
 template <typename T>
 struct Cell
 {
-    // TODO: Add baseDepth for tracking the depth to the base of this Cell
     std::unique_ptr<Cell> below = nullptr;
-    float depth = 0.0f;
+    float floor = 0.0f; // height until the bottom of this section
+    float depth = 0.0f; // depth of this section
     T value;
 
     Cell() {}
-    Cell(float d, T val) : depth(d), value(val) {}
+    Cell(float f, float d, T val) : floor(f), depth(d), value(val) {}
 
     float totalDepth()
     {
-        float d{depth};
-        if (below != nullptr)
-            d += below->totalDepth();
-        return d;
+        return floor + depth;
     }
     size_t numLayers()
     {
@@ -48,36 +46,37 @@ public:
     const size_t width() const { return m_height; };
     const size_t height() const { return m_width; };
     const size_t size() const { return m_width * m_height; };
+    template <typename U>
+    bool isValidPos(const U x, const U y)
+    {
+        return (0 <= x && x < m_width && 0 <= y && y < m_height);
+    }
+
     void addDepth(CellIterator it, float depth, T val)
     {
-        // assert(it != end(), "Iterator out of range");
-        // assert(depth > 0.0f, "Can't add negative depth");
-        if (it == end())
-            throw("Out of bounds");
-        else if (depth < 0.0f)
-            throw("Cannot add negative depth");
+        assert(it != end());
+        assert(depth >= 0.0f);
 
         // Replace the Cell contents if it's not got any depth (default)
         if (it->depth <= 0.0f)
         {
-            *it = Cell<T>(depth, val);
+            it->depth = depth;
+            it->value = val;
         }
         else
         {
             // Copy the current cell into a new child cell, update the current cell
             auto oldCell = std::make_unique<Cell<T>>(std::move(*it));
-            *it = Cell<T>(depth, val);
+            *it = Cell<T>(oldCell->totalDepth(), depth, val);
             it->below = std::move(oldCell);
         }
     }
     void removeDepth(CellIterator it, float depth)
     {
-        // TODO: Handle negative depth
-        if (it == end())
-        {
-            throw("Out of bounds");
-        }
-        else if (depth > it->depth)
+        assert(it != end());
+        assert(depth >= 0.0f);
+
+        if (depth > it->depth)
         {
             // Remove cell and recurse with remaining depth
             float remainingDepth = depth - it->depth;
@@ -93,6 +92,7 @@ public:
     }
     vec3f normal(size_t x, size_t y)
     {
+        assert(isValidPos(x, y));
         // Central differential
         // When calculating out of bounds values, assume the edge values are extended
         float left = m_values[y * m_width + (x > 0 ? x - 1 : x)].totalDepth();
@@ -102,17 +102,11 @@ public:
         return normalise(vec3f(2.0f * (right - left), 2.0f * (bottom - top), -4.0f));
     }
 
-    template <typename U>
-    bool isValidPos(const U x, const U y)
-    {
-        return (0 <= x && x < m_width && 0 <= y && y < m_height);
-    }
-
     CellIterator begin()
     {
         return m_values.begin();
     }
-    CellIterator cellIndex(size_t x, size_t y)
+    CellIterator iterator(size_t x, size_t y)
     {
         return m_values.begin() + y * m_width + x;
     }
@@ -120,15 +114,15 @@ public:
     {
         return m_values.end();
     }
-    CellIterator deepestCell() const
+    CellIterator deepestCell()
     {
-        return std::max_element(begin(), end(), [](const auto &lhs, const auto &rhs) -> bool
-                                { lhs->totalDepth() < rhs->totalDepth(); });
+        return std::max_element(begin(), end(), [](auto &lhs, auto &rhs) -> bool
+                                { lhs.totalDepth() < rhs.totalDepth(); });
     }
-    CellIterator mostLayeredCell() const
+    CellIterator mostLayeredCell()
     {
-        return std::max_element(begin(), end(), [](const auto &lhs, const auto &rhs) -> bool
-                                { lhs->numLayers() < rhs->numLayers(); });
+        return std::max_element(begin(), end(), [](auto &lhs, auto &rhs) -> bool
+                                { lhs.numLayers() < rhs.numLayers(); });
     }
 
 private:
