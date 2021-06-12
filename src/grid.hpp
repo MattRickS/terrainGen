@@ -53,7 +53,7 @@ public:
 
     void addDepth(CellIterator it, float depth, T val)
     {
-        assert(it != end());
+        assert(it < end());
         assert(depth >= 0.0f);
 
         // Replace the Cell contents if it's not got any depth (default)
@@ -76,7 +76,7 @@ public:
     }
     void removeDepth(CellIterator it, float depth)
     {
-        assert(it != end());
+        assert(it < end());
         assert(depth >= 0.0f);
 
         if (depth > it->depth)
@@ -104,7 +104,7 @@ public:
     }
     vec3f normal(CellIterator it)
     {
-        assert(it != end());
+        assert(it < end());
 
         int index = std::distance(begin(), it);
         int x = index % m_width;
