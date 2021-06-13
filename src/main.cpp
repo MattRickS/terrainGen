@@ -58,14 +58,15 @@ void addNoiseLayer(FastNoiseLite &noise, Grid &grid, LayerType type, float mult 
 
 void playParticle(Grid &grid, Grid &renderGrid, size_t x, size_t y, size_t n = 1000)
 {
-    vec3f pos{(float)x, (float)y, grid.iterator(x, y)->totalDepth()};
+    // Start in the middle of the cell to avoid 0 distance to adjacent cell.
+    vec3f pos{x + 0.5f, y + 0.5f, grid.iterator(x, y)->totalDepth()};
     Particle part(pos);
 
     while (n > 0 && part.move(grid))
     {
         auto it = renderGrid.iterator((int)part.pos.x, (int)part.pos.y);
         if (it != renderGrid.end())
-            renderGrid.addDepth(it, 0.01f, LayerType::Air);
+            renderGrid.addDepth(it, 0.2f, LayerType::Air);
         n--;
     }
 }
@@ -74,7 +75,7 @@ void playParticles(Grid &grid)
 {
     Grid particlePathGrid(grid.width(), grid.height());
 
-    int particleIterations = 1000;
+    int particleIterations = 100;
     int numParticles = 20000;
     int seed = 1337; // rd()
 
@@ -83,6 +84,7 @@ void playParticles(Grid &grid)
     std::uniform_int_distribution<int> uni(0, grid.width()); // guaranteed unbiased
 
     std::cout << "Running " << numParticles << " particles" << std::endl;
+
     while (numParticles > 0)
     {
         playParticle(grid, particlePathGrid, uni(rng), uni(rng), particleIterations);
