@@ -5,6 +5,7 @@
 #include <random>
 
 #include <FastNoiseLite.h>
+#include <glm/glm.hpp>
 
 #include <grid.hpp>
 #include <layer.hpp>
@@ -40,7 +41,7 @@ Grid::CellIterator mostLayeredCell(Grid &grid)
                             { return lhs.numLayers() < rhs.numLayers(); });
 }
 
-using GetColorFunc = typename std::function<vec3f(Grid::CellIterator)>;
+using GetColorFunc = typename std::function<glm::vec3(Grid::CellIterator)>;
 
 void writeGrid(std::ostream &out, Grid &grid, const GetColorFunc &getColor)
 {
@@ -56,10 +57,10 @@ void writeGridToFile(const char *name, Grid &grid, const GetColorFunc &getColor)
     file.close();
 }
 
-vec3f cellColor(Grid::CellIterator it)
+glm::vec3 cellColor(Grid::CellIterator it)
 {
-    return it->totalDepth();
-    // vec3f color(0.0f);
+    return glm::vec3{it->totalDepth()};
+    // glm::vec3 color(0.0f);
     // while (cell != nullptr)
     // {
     //     color += LAYER_PROPERTIES[cell->value].color * cell->depth;
@@ -78,7 +79,7 @@ void addNoiseLayer(FastNoiseLite &noise, Grid &grid, LayerType type, float mult 
 void playParticle(Grid &grid, Grid &renderGrid, size_t x, size_t y, size_t n = 1000)
 {
     // Start in the middle of the cell to avoid 0 distance to adjacent cell.
-    vec3f pos{x + 0.5f, y + 0.5f, grid.iterator(x, y)->totalDepth()};
+    glm::vec3 pos{x + 0.5f, y + 0.5f, grid.iterator(x, y)->totalDepth()};
     Particle part(pos);
 
     while (n > 0 && part.move(grid))
@@ -141,9 +142,9 @@ int main(int argc, char const *argv[])
     float maxDepth = deepestCell(grid)->totalDepth();
     std::cout << "Normalising height map to max depth: " << maxDepth << std::endl;
 
-    writeGridToFile("./images/height.ppm", grid, [&grid, &maxDepth](Grid::CellIterator it) -> vec3f
-                    { return it->totalDepth() / maxDepth; });
-    writeGridToFile("./images/normals.ppm", grid, [&grid](Grid::CellIterator it) -> vec3f
+    writeGridToFile("./images/height.ppm", grid, [&grid, &maxDepth](Grid::CellIterator it) -> glm::vec3
+                    { return glm::vec3{it->totalDepth() / maxDepth}; });
+    writeGridToFile("./images/normals.ppm", grid, [&grid](Grid::CellIterator it) -> glm::vec3
                     { return grid.normal(it) * 0.5f + 0.5f; });
 
     timer.printTimedMessage("Images written");

@@ -3,7 +3,7 @@
 #include <cassert>
 #include <memory>
 #include <vector>
-#include <vec3.hpp>
+#include <glm/glm.hpp>
 
 template <typename T>
 class Grid2D
@@ -102,7 +102,7 @@ public:
             it->depth -= depth;
         }
     }
-    vec3f normal(CellIterator it)
+    glm::vec3 normal(CellIterator it)
     {
         assert(it < end());
 
@@ -120,7 +120,7 @@ public:
         //  https://stackoverflow.com/questions/49640250/calculate-normals-from-heightmap
         // Inverting the normal to get an accurate result but.... why?
         // TODO: Validate the math
-        return normalise(-vec3f(2.0f * (right - left), 2.0f * (bottom - top), -4.0f));
+        return glm::normalize(-glm::vec3(2.0f * (right - left), 2.0f * (bottom - top), -4.0f));
     }
 
     CellIterator begin()

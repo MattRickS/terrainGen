@@ -1,6 +1,6 @@
 #pragma once
 #include <map>
-#include <vec3.hpp>
+#include <glm/glm.hpp>
 
 enum LayerType
 {
@@ -13,11 +13,11 @@ enum LayerType
 
 struct LayerProperties
 {
-    vec3f color;
+    glm::vec3 color;
 };
 
 std::map<LayerType, LayerProperties> LAYER_PROPERTIES = {
-    {LayerType::Air, {vec3f(1.0f, 1.0f, 1.0f)}},
-    {LayerType::Rock, {vec3f(0.0f, 0.1f, 0.0f)}},
-    {LayerType::Soil, {vec3f(1.0f, 0.0f, 0.0f)}},
+    {LayerType::Air, {glm::vec3(1.0f, 1.0f, 1.0f)}},
+    {LayerType::Rock, {glm::vec3(0.0f, 0.1f, 0.0f)}},
+    {LayerType::Soil, {glm::vec3(1.0f, 0.0f, 0.0f)}},
 };

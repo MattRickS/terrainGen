@@ -1,7 +1,7 @@
 #pragma once
 #include <grid.hpp>
 #include <layer.hpp>
-#include <vec3.hpp>
+#include <glm/glm.hpp>
 
 using Grid = Grid2D<LayerType>;
 
@@ -9,9 +9,9 @@ class Particle
 {
 public:
     // TODO: How soluble the particle is
-    vec3f pos;
+    glm::vec2 pos;
 
-    Particle(vec3f p) : pos(p) {}
+    Particle(glm::vec2 p) : pos(p) {}
 
     // TODO: Add speed/momentum to movement?
     bool move(Grid &grid)
@@ -22,10 +22,7 @@ public:
         if (it == grid.end())
             return false;
 
-        vec3f normal = grid.normal(it);
-
-        // For the time being, we don't care about the z-axis, keep it consistent.
-        normal.z = 0.0f;
+        glm::vec3 normal = grid.normal(it);
 
         // Get the closest integer axis and extend the normal until the position
         // exits the current cell
@@ -35,7 +32,7 @@ public:
         float factorY = std::fabs((pos.y - nextY) / normal.y);
 
         // Extend a little further so it crosses the boundary, otherwise the pos may think it's in the same cell.
-        pos += normal * std::min(factorX, factorY) * 1.001f;
+        pos += glm::vec2{normal * std::min(factorX, factorY) * 1.001f};
 
         return ((int)pos.x != x || (int)pos.y != y);
     }
