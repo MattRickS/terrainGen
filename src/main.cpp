@@ -12,6 +12,8 @@
 #include <particle.hpp>
 #include <ppm.hpp>
 
+#define DEBUG
+
 class Timer
 {
 public:
@@ -35,11 +37,6 @@ Grid::CellIterator deepestCell(Grid &grid)
     return std::max_element(grid.begin(), grid.end(), [](auto &lhs, auto &rhs) -> bool
                             { return lhs.totalDepth() < rhs.totalDepth(); });
 }
-Grid::CellIterator mostLayeredCell(Grid &grid)
-{
-    return std::max_element(grid.begin(), grid.end(), [](auto &lhs, auto &rhs) -> bool
-                            { return lhs.numLayers() < rhs.numLayers(); });
-}
 
 using GetColorFunc = typename std::function<glm::vec3(Grid::CellIterator)>;
 
@@ -60,13 +57,6 @@ void writeGridToFile(const char *name, Grid &grid, const GetColorFunc &getColor)
 glm::vec3 cellColor(Grid::CellIterator it)
 {
     return glm::vec3{it->totalDepth()};
-    // glm::vec3 color(0.0f);
-    // while (cell != nullptr)
-    // {
-    //     color += LAYER_PROPERTIES[cell->value].color * cell->depth;
-    //     cell = cell->below.get();
-    // }
-    // return color;
 }
 
 void addNoiseLayer(FastNoiseLite &noise, Grid &grid, LayerType type, float mult = 1.0f)
@@ -115,10 +105,12 @@ void playParticles(Grid &grid, Timer &timer)
         playParticle(grid, particlePathGrid, uni(rng), uni(rng), particleIterations);
         numParticles--;
     }
-    timer.printTimedMessage("Particles played");
 
+#ifdef DEBUG
+    timer.printTimedMessage("Particles played");
     writeGridToFile("./images/particles.ppm", particlePathGrid, cellColor);
     timer.printTimedMessage("Particle image written");
+#endif
 }
 
 int main(int argc, char const *argv[])
@@ -135,17 +127,8 @@ int main(int argc, char const *argv[])
     noise.SetFrequency(0.005f);
     addNoiseLayer(noise, grid, LayerType::Rock, 1.0f);
 
+#ifdef DEBUG
     timer.printTimedMessage("Noise generated");
-
-    // Write second layer on top of first
-    // noise.SetSeed(1783986);
-    // addNoiseLayer(noise, grid, LayerType::Soil);
-
-    // Remove an arbitrary section
-    // for (int y = 100; y < 200; y++)
-    //     for (int x = 100; x < 200; x++)
-    //         grid.removeDepth(grid.iterator(x, y), 0.5f);
-
     float maxDepth = deepestCell(grid)->totalDepth();
     std::cout << "Normalising height map to max depth: " << maxDepth << std::endl;
 
@@ -154,14 +137,17 @@ int main(int argc, char const *argv[])
     writeGridToFile("./images/normals.ppm", grid, [&grid](Grid::CellIterator it) -> glm::vec3
                     { return grid.normal(it) * 0.5f + 0.5f; });
     timer.printTimedMessage("Initial Images written");
+#endif
 
     playParticles(grid, timer);
 
+#ifdef DEBUG
     writeGridToFile("./images/erode_height.ppm", grid, [&grid, &maxDepth](Grid::CellIterator it) -> glm::vec3
                     { return glm::vec3{it->totalDepth() / maxDepth}; });
     writeGridToFile("./images/erode_normals.ppm", grid, [&grid](Grid::CellIterator it) -> glm::vec3
                     { return grid.normal(it) * 0.5f + 0.5f; });
     timer.printTimedMessage("Eroded images written");
+#endif
 
     return 0;
 }
