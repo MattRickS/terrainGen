@@ -76,19 +76,26 @@ void addNoiseLayer(FastNoiseLite &noise, Grid &grid, LayerType type, float mult 
             grid.addDepth(grid.iterator(x, y), (noise.GetNoise((float)x, (float)y) * 0.5f + 0.5f) * mult, type);
 }
 
+const float MINIMUM_VOLUME = 0.01f;
+
 void playParticle(Grid &grid, Grid &renderGrid, size_t x, size_t y, size_t n = 1000)
 {
     // Start in the middle of the cell to avoid 0 distance to adjacent cell.
     glm::vec3 pos{x + 0.5f, y + 0.5f, grid.iterator(x, y)->totalDepth()};
     Particle part(pos);
 
-    while (n > 0 && part.move(grid))
+    while (n > 0 && part.volume > MINIMUM_VOLUME && part.move(grid))
     {
         auto it = renderGrid.iterator((int)part.pos.x, (int)part.pos.y);
         if (it != renderGrid.end())
-            renderGrid.addDepth(it, 0.2f, LayerType::Air);
+            renderGrid.addDepth(it, 0.002f, LayerType::Air);
         n--;
     }
+
+    // Drop any remaining sediment
+    auto it = grid.iterator((int)part.pos.x, (int)part.pos.y);
+    if (it != grid.end())
+        it->depth += part.sediment;
 }
 
 void playParticles(Grid &grid, Timer &timer)
@@ -96,7 +103,7 @@ void playParticles(Grid &grid, Timer &timer)
     Grid particlePathGrid(grid.width(), grid.height());
 
     int particleIterations = 100;
-    int numParticles = 20000;
+    int numParticles = 4000000;
     int seed = 1337; // rd()
 
     std::random_device rd;                                   // only used once to initialise (seed) engine
@@ -118,7 +125,7 @@ int main(int argc, char const *argv[])
 {
     Timer timer{};
 
-    Grid grid(512, 512);
+    Grid grid(128, 128);
 
     // Write first layer
     FastNoiseLite noise;
@@ -126,7 +133,7 @@ int main(int argc, char const *argv[])
     noise.SetFractalType(FastNoiseLite::FractalType_FBm);
     noise.SetFractalOctaves(4);
     noise.SetFrequency(0.005f);
-    addNoiseLayer(noise, grid, LayerType::Rock, 5.0f);
+    addNoiseLayer(noise, grid, LayerType::Rock, 1.0f);
 
     timer.printTimedMessage("Noise generated");
 
@@ -146,10 +153,15 @@ int main(int argc, char const *argv[])
                     { return glm::vec3{it->totalDepth() / maxDepth}; });
     writeGridToFile("./images/normals.ppm", grid, [&grid](Grid::CellIterator it) -> glm::vec3
                     { return grid.normal(it) * 0.5f + 0.5f; });
-
-    timer.printTimedMessage("Images written");
+    timer.printTimedMessage("Initial Images written");
 
     playParticles(grid, timer);
+
+    writeGridToFile("./images/erode_height.ppm", grid, [&grid, &maxDepth](Grid::CellIterator it) -> glm::vec3
+                    { return glm::vec3{it->totalDepth() / maxDepth}; });
+    writeGridToFile("./images/erode_normals.ppm", grid, [&grid](Grid::CellIterator it) -> glm::vec3
+                    { return grid.normal(it) * 0.5f + 0.5f; });
+    timer.printTimedMessage("Eroded images written");
 
     return 0;
 }
