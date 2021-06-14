@@ -1,3 +1,4 @@
+#include <chrono>
 #include <iostream>
 #include <fstream>
 #include <functional>
@@ -9,6 +10,24 @@
 #include <layer.hpp>
 #include <particle.hpp>
 #include <ppm.hpp>
+
+class Timer
+{
+public:
+    std::chrono::system_clock::time_point timer;
+
+    Timer()
+    {
+        timer = std::chrono::high_resolution_clock::now();
+    }
+
+    void printTimedMessage(const char *msg)
+    {
+        auto done = std::chrono::high_resolution_clock::now();
+        std::cout << "[" << std::chrono::duration_cast<std::chrono::milliseconds>(done - timer).count() << "ms] " << msg << std::endl;
+        timer = done;
+    }
+};
 
 Grid::CellIterator deepestCell(Grid &grid)
 {
@@ -71,7 +90,7 @@ void playParticle(Grid &grid, Grid &renderGrid, size_t x, size_t y, size_t n = 1
     }
 }
 
-void playParticles(Grid &grid)
+void playParticles(Grid &grid, Timer &timer)
 {
     Grid particlePathGrid(grid.width(), grid.height());
 
@@ -83,19 +102,21 @@ void playParticles(Grid &grid)
     std::mt19937 rng(seed);                                  // random-number engine used (Mersenne-Twister in this case)
     std::uniform_int_distribution<int> uni(0, grid.width()); // guaranteed unbiased
 
-    std::cout << "Running " << numParticles << " particles" << std::endl;
-
     while (numParticles > 0)
     {
         playParticle(grid, particlePathGrid, uni(rng), uni(rng), particleIterations);
         numParticles--;
     }
+    timer.printTimedMessage("Particles played");
 
     writeGridToFile("./images/particles.ppm", particlePathGrid, cellColor);
+    timer.printTimedMessage("Particle image written");
 }
 
 int main(int argc, char const *argv[])
 {
+    Timer timer{};
+
     Grid grid(512, 512);
 
     // Write first layer
@@ -105,6 +126,8 @@ int main(int argc, char const *argv[])
     noise.SetFractalOctaves(4);
     noise.SetFrequency(0.005f);
     addNoiseLayer(noise, grid, LayerType::Rock, 5.0f);
+
+    timer.printTimedMessage("Noise generated");
 
     // Write second layer on top of first
     // noise.SetSeed(1783986);
@@ -116,13 +139,16 @@ int main(int argc, char const *argv[])
     //         grid.removeDepth(grid.iterator(x, y), 0.5f);
 
     float maxDepth = deepestCell(grid)->totalDepth();
-    std::cout << "Normalising height map, max depth: " << maxDepth << std::endl;
+    std::cout << "Normalising height map to max depth: " << maxDepth << std::endl;
+
     writeGridToFile("./images/height.ppm", grid, [&grid, &maxDepth](Grid::CellIterator it) -> vec3f
                     { return it->totalDepth() / maxDepth; });
     writeGridToFile("./images/normals.ppm", grid, [&grid](Grid::CellIterator it) -> vec3f
                     { return grid.normal(it) * 0.5f + 0.5f; });
 
-    playParticles(grid);
+    timer.printTimedMessage("Images written");
+
+    playParticles(grid, timer);
 
     return 0;
 }
