@@ -5,7 +5,6 @@
 
 using Grid = Grid2D<LayerType>;
 
-const float DENSITY = 1.0f;
 const float DEPOSITION_RATE = 0.01f;
 const float EVAPORATION_RATE = 0.001f;
 const float FRICTION_RATE = 0.95f;
@@ -18,6 +17,7 @@ public:
     glm::vec2 speed{0};
     float volume = 1.0f;
     float sediment = 0.0f;
+    float density = 1.0f;
 
     Particle(glm::vec2 p) : pos(p) {}
 
@@ -47,8 +47,8 @@ public:
 
         // Many flaws in this implementation
         // TODO: These equations should be influenced by the factor
-        speed *= FRICTION_RATE;
-        speed += glm::vec2{normal.x} / (volume * DENSITY);
+        speed *= FRICTION_RATE; // std::pow(FRICTION_RATE, factor);
+        speed += glm::vec2{normal.x, normal.y} / (volume * density);
 
         // Tie the equilibrium to the speed of the particle
         float equilibrium = std::max(0.0f, volume * glm::length(speed) * 0.1f);
