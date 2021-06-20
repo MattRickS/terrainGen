@@ -5,9 +5,12 @@
 
 using Grid = Grid2D<LayerType>;
 
-const float DEPOSITION_RATE = 0.01f;
+const float DELTA = 0.01f;
+const float TRANSFER_RATE = 0.01f;
 const float EVAPORATION_RATE = 0.001f;
-const float FRICTION_RATE = 0.95f;
+const float FRICTION_RATE = 0.999f;
+const float EQUILIBRIUM_FACTOR = 0.1f;
+const float MINIMUM_VOLUME = 0.01f;
 
 class Particle
 {
@@ -40,31 +43,50 @@ public:
             std::fabs((pos.x - nextX) / normal.x),
             std::fabs((pos.y - nextY) / normal.y));
 
+        if (factor == 0.0f)
+            return false;
+
         // Extend a little further so it crosses the boundary, otherwise the pos may think it's in the same cell.
         pos += glm::vec2{normal * factor * 1.001f};
 
         // ---------------------------------------------------------------------
+        /*
+        Thoughts:
+
+        Apply friction per iteration. Ie, if friction reduced by 10% each time, then it's .9*.9*.9 ...
+            pow(friction, factor) * speed
+        speed *= std::pow(FRICTION_RATE, factor);
+        
+        1. Apply friction to slow
+        2. Apply normal based speed increase
+        3. If too slow, stop
+        4. 
+
+
+        // Factor indicates how many iterations of the normal are needed to traverse
+        // the cell. Use as a form of delta.
+        factor *= DELTA;
+        */
 
         // Many flaws in this implementation
         // TODO: These equations should be influenced by the factor
         speed *= FRICTION_RATE; // std::pow(FRICTION_RATE, factor);
         speed += glm::vec2{normal.x, normal.y} / (volume * density);
 
-        // Tie the equilibrium to the speed of the particle
-        float equilibrium = std::max(0.0f, volume * glm::length(speed) * 0.1f);
+        // Can absorb more the faster it's moving
+        float equilibrium = std::max(0.0f, volume * glm::length(speed) * EQUILIBRIUM_FACTOR);
+        float transferToParticle = volume * TRANSFER_RATE * (equilibrium - sediment); // * factor
 
-        // Compute Capacity Difference ("Driving Force")
-        float diff = equilibrium - sediment;
+        // Ensure the amount being transferred between grid and particle is valid
+        float transferQuantity = (transferToParticle > 0) ? std::min(it->depth, transferToParticle) : std::min(sediment, transferToParticle);
+        it->depth -= transferQuantity;
+        sediment += transferQuantity;
 
-        // Perform the Mass Transfer!
-        // TODO: Should check there is enough sediment to be removed first
-        sediment = std::max(0.0f, sediment + DEPOSITION_RATE * diff);
-        it->depth -= volume * DEPOSITION_RATE * diff;
-
-        volume -= EVAPORATION_RATE;
+        // Remove some volume
+        volume -= EVAPORATION_RATE; // * factor;
         // ---------------------------------------------------------------------
 
         // Whether or not we left the original cell
-        return ((int)pos.x != x || (int)pos.y != y);
+        return ((int)pos.x != x || (int)pos.y != y); // && volume > MINIMUM_VOLUME
     }
 };

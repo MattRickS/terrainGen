@@ -66,19 +66,17 @@ void addNoiseLayer(FastNoiseLite &noise, Grid &grid, LayerType type, float mult 
             grid.addDepth(grid.iterator(x, y), (noise.GetNoise((float)x, (float)y) * 0.5f + 0.5f) * mult, type);
 }
 
-const float MINIMUM_VOLUME = 0.01f;
-
 void playParticle(Grid &grid, Grid &renderGrid, size_t x, size_t y, size_t n = 1000)
 {
     // Start in the middle of the cell to avoid 0 distance to adjacent cell.
     glm::vec3 pos{x + 0.5f, y + 0.5f, grid.iterator(x, y)->totalDepth()};
     Particle part(pos);
 
-    while (n > 0 && part.volume > MINIMUM_VOLUME && part.move(grid))
+    while (n > 0 && part.move(grid))
     {
         auto it = renderGrid.iterator((int)part.pos.x, (int)part.pos.y);
         if (it != renderGrid.end())
-            renderGrid.addDepth(it, 0.002f, LayerType::Air);
+            renderGrid.addDepth(it, 0.02f, LayerType::Air);
         n--;
     }
 
