@@ -11,6 +11,7 @@ const float EVAPORATION_RATE = 0.001f;
 const float FRICTION_RATE = 0.999f;
 const float EQUILIBRIUM_FACTOR = 0.1f;
 const float MINIMUM_VOLUME = 0.01f;
+const float MOMENTUM_BLENDING = 0.1f;
 
 class Particle
 {
@@ -71,7 +72,13 @@ public:
         // Many flaws in this implementation
         // TODO: These equations should be influenced by the factor
         speed *= FRICTION_RATE; // std::pow(FRICTION_RATE, factor);
-        speed += glm::vec2{normal.x, normal.y} / (volume * density);
+
+        // Average the normal with the current speed weight to mock momentum
+        // TODO: Quick tests have some slight improvments to smoothness but possibly less beneficial overall
+        //       Needs better testing to determine whether it's worth it or not
+        glm::vec2 newDirection = (glm::vec2{normal.x, normal.y} + speed * MOMENTUM_BLENDING) * 0.5f;
+        speed += newDirection / (volume * density);
+        // speed += glm::vec2{normal.x, normal.y} / (volume * density);
 
         // Can absorb more the faster it's moving
         float equilibrium = std::max(0.0f, volume * glm::length(speed) * EQUILIBRIUM_FACTOR);
@@ -87,6 +94,6 @@ public:
         // ---------------------------------------------------------------------
 
         // Whether or not we left the original cell
-        return ((int)pos.x != x || (int)pos.y != y); // && volume > MINIMUM_VOLUME
+        return ((int)pos.x != x || (int)pos.y != y); // && volume > MINIMUM_VOLUME; // Doesn't appear to add anything, just slows down
     }
 };
