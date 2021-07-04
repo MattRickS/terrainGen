@@ -75,8 +75,8 @@ void playParticle(Grid &grid, Grid &renderGrid, size_t x, size_t y, size_t n = 1
     while (n > 0 && part.move(grid))
     {
         auto it = renderGrid.iterator((int)part.pos.x, (int)part.pos.y);
-        if (it != renderGrid.end())
-            renderGrid.addDepth(it, 0.02f, LayerType::Air);
+        // if (it != renderGrid.end())
+        //     renderGrid.addDepth(it, 0.02f, LayerType::Air);
         n--;
     }
 
@@ -84,6 +84,11 @@ void playParticle(Grid &grid, Grid &renderGrid, size_t x, size_t y, size_t n = 1
     auto it = grid.iterator((int)part.pos.x, (int)part.pos.y);
     if (it != grid.end())
         it->depth += part.sediment;
+
+    // Record where the particles stop
+    it = renderGrid.iterator((int)part.pos.x, (int)part.pos.y);
+    if (it != renderGrid.end())
+        renderGrid.addDepth(it, part.volume * 0.001f, LayerType::Air);
 }
 
 void playParticles(Grid &grid, Timer &timer)

@@ -6,7 +6,7 @@
 using Grid = Grid2D<LayerType>;
 
 const float DELTA = 0.01f;
-const float TRANSFER_RATE = 0.01f;
+const float TRANSFER_RATE = 0.001f;
 const float EVAPORATION_RATE = 0.001f;
 const float FRICTION_RATE = 0.999f;
 const float EQUILIBRIUM_FACTOR = 0.1f;
@@ -76,9 +76,9 @@ public:
         // Average the normal with the current speed weight to mock momentum
         // TODO: Quick tests have some slight improvments to smoothness but possibly less beneficial overall
         //       Needs better testing to determine whether it's worth it or not
-        glm::vec2 newDirection = (glm::vec2{normal.x, normal.y} + speed * MOMENTUM_BLENDING) * 0.5f;
-        speed += newDirection / (volume * density);
-        // speed += glm::vec2{normal.x, normal.y} / (volume * density);
+        // glm::vec2 newDirection = (glm::vec2{normal.x, normal.y} + speed * MOMENTUM_BLENDING) * 0.5f;
+        // speed += newDirection / (volume * density);
+        speed += glm::vec2{normal.x, normal.y} / (volume * density);
 
         // Can absorb more the faster it's moving
         float equilibrium = std::max(0.0f, volume * glm::length(speed) * EQUILIBRIUM_FACTOR);
